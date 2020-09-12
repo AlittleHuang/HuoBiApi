@@ -15,10 +15,10 @@ namespace HuoBiApi.Controllers
         }
 
 
-        [HttpGet("/api/info")]
-        public object Get()
+        [HttpGet("")]
+        public object Home()
         {
-            return Ok(Period.Day1.GetId());
+            return Ok("Hello!");
         }
 
         [HttpGet("/api/history/kline")]
