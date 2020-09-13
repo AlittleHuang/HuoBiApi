@@ -70,18 +70,20 @@ namespace HuoBiApi.Models.Trade
 
             var result = new List<TradeData>(_cache[key]);
             result.Reverse();
-            return result.GetRange(0, size);
+            return result.GetRange(0, Math.Min(result.Count, size));
         }
 
 
         private void Init()
         {
+            CloseWebSocket();
+
             _webSocket = HuobiWebSocketClient.GetWebSocket();
             _webSocket.OnMessage += (sender, e) =>
             {
                 var data = GZipDecompresser.Decompress(e.RawData);
                 if (data.Contains("ping"))
-                    _webSocket.Send(data.Replace("ping", "pong"));
+                    ((WebSocket) sender)?.Send(data.Replace("ping", "pong"));
                 else
                     try
                     {
@@ -115,13 +117,25 @@ namespace HuoBiApi.Models.Trade
             {
                 _webSocket.Connect();
             }
-            catch (Exception e)
+            catch
             {
                 _cache.Clear();
-                throw e;
+                throw;
             }
 
             SetTimer();
+        }
+
+        private void CloseWebSocket()
+        {
+            try
+            {
+                _webSocket?.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         private void SetTimer()
