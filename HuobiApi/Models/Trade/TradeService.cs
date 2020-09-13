@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
+using HuobiApi.Models.Trade;
 using HuoBiApi.Utils;
 using Test;
 using WebSocketSharp;
@@ -13,12 +15,14 @@ namespace HuoBiApi.Models.Trade
         private readonly Dictionary<string, ConcurrentQueue<TradeData>> _cache =
             new Dictionary<string, ConcurrentQueue<TradeData>>();
 
+        private readonly HttpClient _httpClient;
         private readonly SymbolsService _symbolsService;
         private WebSocket _webSocket;
 
-        public TradeService(SymbolsService symbolsService)
+        public TradeService(SymbolsService symbolsService, HttpClient httpClient)
         {
             _symbolsService = symbolsService;
+            _httpClient = httpClient;
             Init();
         }
 
@@ -31,11 +35,28 @@ namespace HuoBiApi.Models.Trade
             var key = $"market.{symbol}.trade.detail";
             if (!_cache.ContainsKey(key))
             {
-                var sendData = $"{{\"sub\":\"{key}\",\"id\":\"{Guid.NewGuid()}\"}}";
-                _webSocket.Send(sendData);
+                lock (this)
+                {
+                    if (!_cache.ContainsKey(key))
+                    {
+                        string history = _httpClient.GetStringAsync($"https://api.huobi.pro/market/history/trade?symbol={symbol}&size=100").Result;
+                        history = history.Replace("trade-id", "tradeId");
+                        TradeHistory tradeHistory = Json.Deserialize<TradeHistory>(history);
+                        _cache[key] = new ConcurrentQueue<TradeData>();
+                        foreach (var tick in tradeHistory.Data)
+                        {
+                            foreach (var item in tick.Data)
+                            {
+                                _cache[key].Enqueue(item);
+                            }
+                        }
+                        var sendData = $"{{\"sub\":\"{key}\",\"id\":\"{Guid.NewGuid()}\"}}";
+                        _webSocket.Send(sendData);
+                    }
+                }
             }
 
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 50; i++)
             {
                 if (_cache.ContainsKey(key)) break;
 
@@ -86,7 +107,15 @@ namespace HuoBiApi.Models.Trade
                 _cache.Clear();
                 Init();
             };
-            _webSocket.Connect();
+            try
+            {
+                _webSocket.Connect();
+            }
+            catch(Exception e)
+            {
+                _cache.Clear();
+                throw e;
+            }
         }
     }
 }
