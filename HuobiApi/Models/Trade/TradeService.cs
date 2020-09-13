@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using HuobiApi.Models.Trade;
@@ -26,11 +27,9 @@ namespace HuoBiApi.Models.Trade
             Init();
         }
 
-        public List<TradeData> GetTradeData(string symbol)
+        public List<TradeData> GetTradeData(string symbol, int size = 20)
         {
             if (!_symbolsService.Exist(symbol)) throw null;
-
-            if (!_webSocket.IsAlive) Init();
 
             var key = $"market.{symbol}.trade.detail";
             if (!_cache.ContainsKey(key))
@@ -39,17 +38,23 @@ namespace HuoBiApi.Models.Trade
                 {
                     if (!_cache.ContainsKey(key))
                     {
-                        string history = _httpClient.GetStringAsync($"https://api.huobi.pro/market/history/trade?symbol={symbol}&size=100").Result;
+                        var history = _httpClient
+                            .GetStringAsync($"https://api.huobi.pro/market/history/trade?symbol={symbol}&size=100")
+                            .Result;
                         history = history.Replace("trade-id", "tradeId");
-                        TradeHistory tradeHistory = Json.Deserialize<TradeHistory>(history);
+                        var tradeHistory = Json.Deserialize<TradeHistory>(history);
                         _cache[key] = new ConcurrentQueue<TradeData>();
-                        foreach (var tick in tradeHistory.Data)
+                        var tradeTicks = new LinkedList<TradeData>();
+                        foreach (var item in tradeHistory.Data.SelectMany(tick => tick.Data))
                         {
-                            foreach (var item in tick.Data)
-                            {
-                                _cache[key].Enqueue(item);
-                            }
+                            tradeTicks.AddFirst(item);
                         }
+
+                        foreach (var data in tradeTicks)
+                        {
+                            _cache[key].Enqueue(data);
+                        }
+
                         var sendData = $"{{\"sub\":\"{key}\",\"id\":\"{Guid.NewGuid()}\"}}";
                         _webSocket.Send(sendData);
                     }
@@ -65,7 +70,7 @@ namespace HuoBiApi.Models.Trade
 
             var result = new List<TradeData>(_cache[key]);
             result.Reverse();
-            return result;
+            return result.GetRange(0, size);
         }
 
 
@@ -100,7 +105,6 @@ namespace HuoBiApi.Models.Trade
                     {
                         Console.WriteLine(exception);
                     }
-
             };
             _webSocket.OnClose += (sender, e) =>
             {
@@ -111,11 +115,24 @@ namespace HuoBiApi.Models.Trade
             {
                 _webSocket.Connect();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 _cache.Clear();
                 throw e;
             }
+
+            SetTimer();
+        }
+
+        private void SetTimer()
+        {
+            var aTimer = new System.Timers.Timer(5000);
+            aTimer.Elapsed += (a, b) =>
+            {
+                if (!_webSocket.IsAlive) Init();
+            };
+            aTimer.AutoReset = true;
+            aTimer.Enabled = true;
         }
     }
 }
