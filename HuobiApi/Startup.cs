@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Net.Http;
+using HuoBiApi.Models.ExchangeRate;
 
 namespace HuoBiApi
 {
@@ -29,6 +30,7 @@ namespace HuoBiApi
             services.AddSingleton<KlineService>();
             services.AddSingleton<SymbolsService>();
             services.AddSingleton<TradeService>();
+            services.AddSingleton<ExchangeRateService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,5 +1,4 @@
-﻿using System;
-using HuoBiApi.Models.Depth;
+﻿using HuoBiApi.Models.Depth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HuoBiApi.Controllers
