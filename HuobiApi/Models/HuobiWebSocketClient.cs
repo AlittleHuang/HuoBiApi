@@ -6,7 +6,7 @@ namespace HuoBiApi.Models
     {
         public static WebSocket GetWebSocket()
         {
-            return new WebSocket("wss://api.hadax.com/ws");
+            return new WebSocket("wss://api.huobi.com/ws");
         }
     }
 }
