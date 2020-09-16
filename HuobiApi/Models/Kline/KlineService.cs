@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using HuobiApi.Utils;
 using HuoBiApi.Utils;
 using Test;
 using WebSocketSharp;
@@ -26,6 +27,7 @@ namespace HuoBiApi.Models.Kline
             _httpClient = httpClient;
             _symbolsService = symbolsService;
             Init();
+            SetTimer();
         }
 
         public List<KlineTick> GetTicks(string symbol, Period period, int size = 200)
@@ -117,6 +119,20 @@ namespace HuoBiApi.Models.Kline
                     result[tick.Id] = tick;
 
             return result;
+        }
+        
+        private void SetTimer()
+        {
+            var timer = new System.Timers.Timer(5000);
+            timer.Elapsed += (a, b) =>
+            {
+                if (_webSocket.IsAlive) return;
+                WebSocketUtils.CloseWebSocket(_webSocket);
+                _cache.Clear();
+                Init();
+            };
+            timer.AutoReset = true;
+            timer.Enabled = true;
         }
     }
 

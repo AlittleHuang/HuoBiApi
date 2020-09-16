@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using HuobiApi.Models.Trade;
+using HuobiApi.Utils;
 using HuoBiApi.Utils;
 using Test;
 using WebSocketSharp;
@@ -25,11 +26,12 @@ namespace HuoBiApi.Models.Trade
             _symbolsService = symbolsService;
             _httpClient = httpClient;
             Init();
+            SetTimer();
         }
 
         public List<TradeData> GetTradeData(string symbol, int size = 20)
         {
-            if (!_symbolsService.Exist(symbol)) throw null;
+            if (!_symbolsService.Exist(symbol)) throw new ArgumentException($"symbol {symbol} error");
 
             var key = $"market.{symbol}.trade.detail";
             if (!_cache.ContainsKey(key))
@@ -76,14 +78,12 @@ namespace HuoBiApi.Models.Trade
 
         private void Init()
         {
-            CloseWebSocket();
-
-            _webSocket = HuobiWebSocketClient.GetWebSocket();
-            _webSocket.OnMessage += (sender, e) =>
+            var webSocket = _webSocket = HuobiWebSocketClient.GetWebSocket();
+            webSocket.OnMessage += (sender, e) =>
             {
                 var data = GZipDecompresser.Decompress(e.RawData);
                 if (data.Contains("ping"))
-                    ((WebSocket) sender)?.Send(data.Replace("ping", "pong"));
+                    (sender as WebSocket)?.Send(data.Replace("ping", "pong"));
                 else
                     try
                     {
@@ -93,7 +93,7 @@ namespace HuoBiApi.Models.Trade
                             _cache[updateEvent.Ch] = new ConcurrentQueue<TradeData>();
                         }
 
-                        foreach (TradeData tradeData in updateEvent.Tick.Data)
+                        foreach (var tradeData in updateEvent.Tick.Data)
                         {
                             _cache[updateEvent.Ch].Enqueue(tradeData);
                         }
@@ -108,45 +108,34 @@ namespace HuoBiApi.Models.Trade
                         Console.WriteLine(exception);
                     }
             };
-            _webSocket.OnClose += (sender, e) =>
+            webSocket.OnClose += (sender, e) =>
             {
                 _cache.Clear();
                 Init();
             };
             try
             {
-                _webSocket.Connect();
+                webSocket.Connect();
             }
             catch
             {
                 _cache.Clear();
                 throw;
             }
-
-            SetTimer();
-        }
-
-        private void CloseWebSocket()
-        {
-            try
-            {
-                _webSocket?.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
         }
 
         private void SetTimer()
         {
-            var aTimer = new System.Timers.Timer(5000);
-            aTimer.Elapsed += (a, b) =>
+            var timer = new System.Timers.Timer(5000);
+            timer.Elapsed += (a, b) =>
             {
-                if (!_webSocket.IsAlive) Init();
+                if (_webSocket.IsAlive) return;
+                WebSocketUtils.CloseWebSocket(_webSocket);
+                _cache.Clear();
+                Init();
             };
-            aTimer.AutoReset = true;
-            aTimer.Enabled = true;
+            timer.AutoReset = true;
+            timer.Enabled = true;
         }
     }
 }

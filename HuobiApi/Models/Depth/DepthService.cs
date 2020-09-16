@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using HuobiApi.Utils;
 using HuoBiApi.Utils;
 using Test;
 using WebSocketSharp;
@@ -17,6 +18,7 @@ namespace HuoBiApi.Models.Depth
         {
             _symbolsService = symbolsService;
             Init();
+            SetTimer();
         }
 
         public DepthTick GetDepth(string symbol)
@@ -74,6 +76,19 @@ namespace HuoBiApi.Models.Depth
                 Init();
             };
             _webSocket.Connect();
+        }
+        private void SetTimer()
+        {
+            var timer = new System.Timers.Timer(5000);
+            timer.Elapsed += (a, b) =>
+            {
+                if (_webSocket.IsAlive) return;
+                WebSocketUtils.CloseWebSocket(_webSocket);
+                _cache.Clear();
+                Init();
+            };
+            timer.AutoReset = true;
+            timer.Enabled = true;
         }
     }
 }
