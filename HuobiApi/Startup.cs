@@ -41,6 +41,7 @@ namespace HuoBiApi
                 app.UseDeveloperExceptionPage();
             }
             app.UseRouting();
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }
