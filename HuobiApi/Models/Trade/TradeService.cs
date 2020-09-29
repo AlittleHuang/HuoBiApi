@@ -108,20 +108,9 @@ namespace HuoBiApi.Models.Trade
                         Console.WriteLine(exception);
                     }
             };
-            webSocket.OnClose += (sender, e) =>
-            {
-                _cache.Clear();
-                Init();
-            };
-            try
-            {
-                webSocket.Connect();
-            }
-            catch
-            {
-                _cache.Clear();
-                throw;
-            }
+            webSocket.OnClose += (sender, e) => _cache.Clear();
+            webSocket.OnError += (sender, e) => WebSocketUtils.CloseWebSocket(webSocket);
+            webSocket.Connect();
         }
 
         private void SetTimer()

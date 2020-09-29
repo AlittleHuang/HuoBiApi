@@ -53,12 +53,12 @@ namespace HuoBiApi.Models.Depth
 
         private void Init()
         {
-            _webSocket = HuobiWebSocketClient.GetWebSocket();
-            _webSocket.OnMessage += (sender, e) =>
+            var webSocket = _webSocket = HuobiWebSocketClient.GetWebSocket();
+            webSocket.OnMessage += (sender, e) =>
             {
                 var data = GZipDecompresser.Decompress(e.RawData);
                 if (data.Contains("ping"))
-                    _webSocket.Send(data.Replace("ping", "pong"));
+                    webSocket.Send(data.Replace("ping", "pong"));
                 else
                     try
                     {
@@ -70,13 +70,11 @@ namespace HuoBiApi.Models.Depth
                         // ignored
                     }
             };
-            _webSocket.OnClose += (sender, e) =>
-            {
-                _cache.Clear();
-                Init();
-            };
-            _webSocket.Connect();
+            webSocket.OnClose += (sender, e) => _cache.Clear();
+            webSocket.OnError += (sender, e) => WebSocketUtils.CloseWebSocket(webSocket);
+            webSocket.Connect();
         }
+
         private void SetTimer()
         {
             var timer = new System.Timers.Timer(5000);
