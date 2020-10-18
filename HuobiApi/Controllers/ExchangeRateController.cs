@@ -13,11 +13,28 @@ namespace HuoBiApi.Controllers
             _exchangeRateService = exchangeRateService;
         }
 
+        /// <summary>
+        /// USD 兑换人民币汇率
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("/api/rate/usd-cny")]
-        public object Home()
+        public ActionResult<ExchangeRate> Home()
         {
             var exchangeRate = _exchangeRateService.ExchangeRate;
-            return Ok(new { success = true, data = exchangeRate });
+            return Ok(new ExchangeRate { Success = true, Data = exchangeRate });
         }
+    }
+
+    public class ExchangeRate
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Success { get; set; }
+        /// <summary>
+        /// 汇率
+        /// </summary>
+        public double Data { get; set; }
+
     }
 }

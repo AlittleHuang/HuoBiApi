@@ -13,9 +13,13 @@ namespace HuoBiApi.Controllers
             _depthService = depthService;
         }
 
-
+        /// <summary>
+        /// 深度
+        /// </summary>
+        /// <param name="symbol">币对</param>
+        /// <returns></returns>
         [HttpGet("/api/depth")]
-        public object GetDepth(string symbol)
+        public ActionResult<DepthTick> GetDepth(string symbol)
         {
             return Ok(_depthService.GetDepth(symbol));
         }

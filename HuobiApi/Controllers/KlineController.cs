@@ -14,15 +14,15 @@ namespace HuoBiApi.Controllers
             _klineService = klineService;
         }
 
-
-        [HttpGet("")]
-        public object Home()
-        {
-            return Ok("Hello!");
-        }
-
+        /// <summary>
+        /// k线
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <param name="period"></param>
+        /// <param name="size"></param>
+        /// <returns></returns>
         [HttpGet("/api/history/kline")]
-        public object KlineHistory(string symbol, string period, int size = 200)
+        public ActionResult<KlineTick> KlineHistory(string symbol, string period, int size = 200)
         {
             Period? p = null;
 
@@ -32,7 +32,7 @@ namespace HuoBiApi.Controllers
 
             if (p == null) return NotFound("period error");
 
-            var ticks = _klineService.GetTicks(symbol, (Period) p, size);
+            var ticks = _klineService.GetTicks(symbol, (Period)p, size);
 
             return Ok(ticks);
         }

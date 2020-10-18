@@ -15,10 +15,16 @@ namespace HuoBiApi.Controllers
             _tradeService = tradeService;
         }
 
+        /// <summary>
+        /// 历史成交
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <param name="size"></param>
+        /// <returns></returns>
         [HttpGet("/api/history/trade")]
-        public object Get(string symbol, int size = 20)
+        public ActionResult<TradeData> Get(string symbol, int size = 20)
         {
-            return _tradeService.GetTradeData(symbol, size);
+            return Ok(_tradeService.GetTradeData(symbol, size));
         }
     }
 }
