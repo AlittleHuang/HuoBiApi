@@ -5,26 +5,30 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HuobiApi.AutomaticInjection {
     public static class AutomaticInjectionExpand {
-        public static IServiceCollection AutomaticInjection(this IServiceCollection services) {
+        public static void AutomaticInjection(this IServiceCollection services) {
             Type[] types = Assembly.Load("HuobiApi").GetTypes();
             foreach (var type in types) {
-                Console.WriteLine(type);
-                Component component = type.GetCustomAttribute<Component>();
-                if (component != null) {
-                    Scope scope = component.Scope;
-                    if (scope == Scope.SINGLETON) {
-                        services.AddSingleton(type, type);
-                    }
-                    else if (scope == Scope.SCOPE) {
-                        services.AddScoped(type, type);
-                    }
-                    else if (scope == Scope.TRANSIENT) {
-                        services.AddTransient(type, type);
-                    }
+                if (type.IsInterface) {
+                    continue;
+                }
+
+                var component = type.GetCustomAttribute<Component>();
+                if (component == null) continue;
+                var scope = component.Scope;
+                var interfaces = type.GetInterfaces();
+                Action<Type, Type> action = scope switch {
+                    Scope.SINGLETON => (a, b) => services.AddSingleton(a, b),
+                    Scope.SCOPE => (a, b) => services.AddScoped(a, b),
+                    Scope.TRANSIENT => (a, b) => services.AddTransient(a, b),
+                    _ => null
+                };
+                if (action == null) continue;
+                action(type, type);
+                foreach (var i in interfaces) {
+                    action(i, type);
                 }
             }
 
-            return services;
         }
     }
 }
