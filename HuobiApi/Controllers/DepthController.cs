@@ -1,15 +1,12 @@
 ﻿using HuoBiApi.Models.Depth;
 using Microsoft.AspNetCore.Mvc;
 
-namespace HuoBiApi.Controllers
-{
+namespace HuoBiApi.Controllers {
     [Controller]
-    public class DepthController : ControllerBase
-    {
+    public class DepthController : ControllerBase {
         private readonly DepthService _depthService;
 
-        public DepthController(DepthService depthService)
-        {
+        public DepthController(DepthService depthService) {
             _depthService = depthService;
         }
 
@@ -19,8 +16,7 @@ namespace HuoBiApi.Controllers
         /// <param name="symbol">币对</param>
         /// <returns></returns>
         [HttpGet("/api/depth")]
-        public ActionResult<DepthTick> GetDepth(string symbol)
-        {
+        public ActionResult<DepthTick> GetDepth(string symbol) {
             return Ok(_depthService.GetDepth(symbol));
         }
     }

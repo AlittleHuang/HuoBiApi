@@ -1,7 +1,5 @@
-﻿namespace HuoBiApi.Models.Depth
-{
-    public struct DepthTickUpdateEvent
-    {
+﻿namespace HuoBiApi.Models.Depth {
+    public struct DepthTickUpdateEvent {
         public string Ch { get; set; }
         public long Ts { get; set; }
 

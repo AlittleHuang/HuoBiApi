@@ -1,7 +1,5 @@
-﻿namespace HuoBiApi.Models.Kline
-{
-    public struct KlineTick
-    {
+﻿namespace HuoBiApi.Models.Kline {
+    public struct KlineTick {
         public long Id { get; set; }
         public double Amount { get; set; }
         public int Count { get; set; }

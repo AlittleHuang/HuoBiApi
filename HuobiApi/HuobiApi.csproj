@@ -13,4 +13,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
     <PackageReference Include="WebSocketSharp-netstandard" Version="1.0.1" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="AutomaticInjection\" />
+    <Folder Include="AutomaticInjection\Attributes\" />
+  </ItemGroup>
 </Project>

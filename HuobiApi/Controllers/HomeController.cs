@@ -6,15 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace HuobiApi.Controllers
-{
+namespace HuobiApi.Controllers {
     [Controller]
-    public class HomeController : Controller
-    {
+    public class HomeController : Controller {
         [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet("")]
-        public void Home()
-        {
+        public void Home() {
             Response.Redirect("/swagger/index.html");
         }
     }
